@@ -423,9 +423,9 @@ namespace UnityEngine.Rendering.HighDefinition
             float hash = profile != null ? HDShadowUtils.Asfloat(profile.profile.hash) : 0;
             material.SetFloat(HDShaderIDs._DiffusionProfileHash, hash);
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             material.SetDiffusionProfileAsset(profile, HDShaderIDs._DiffusionProfileAsset);
-            #endif
+#endif
         }
 
         /// <summary>Set the Diffusion profile on a Shader Graph material.</summary>
@@ -437,12 +437,12 @@ namespace UnityEngine.Rendering.HighDefinition
             float hash = profile != null ? HDShadowUtils.Asfloat(profile.profile.hash) : 0;
             material.SetFloat(referenceName, hash);
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             material.SetDiffusionProfileAsset(profile, Shader.PropertyToID(referenceName + "_Asset"));
-            #endif
+#endif
         }
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         internal static void SetDiffusionProfileAsset(this Material material, DiffusionProfileSettings profile, int assetPropertyId, int index = 0)
         {
             Vector4 guid = Vector3.zero;
@@ -453,7 +453,7 @@ namespace UnityEngine.Rendering.HighDefinition
             var externalRefs = MaterialExternalReferences.GetMaterialExternalReferences(material);
             externalRefs.SetDiffusionProfileReference(index, profile);
         }
-        #endif
+#endif
 
         // this will work on ALL shadergraph-built shaders, in memory or asset based
         internal static bool IsShaderGraph(Material material)
