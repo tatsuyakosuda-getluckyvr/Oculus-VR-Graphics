@@ -447,7 +447,7 @@ namespace UnityEngine.Rendering.PostProcessing
 #if UNITY_2018_2_OR_NEWER
                 if (!m_Camera.usePhysicalProperties)
 #endif
-                m_Camera.ResetProjectionMatrix();
+                    m_Camera.ResetProjectionMatrix();
             }
             m_Camera.nonJitteredProjectionMatrix = m_Camera.projectionMatrix;
 
@@ -455,6 +455,12 @@ namespace UnityEngine.Rendering.PostProcessing
             if (m_Camera.stereoEnabled)
             {
                 m_Camera.ResetStereoProjectionMatrices();
+                m_Camera.CopyStereoDeviceProjectionMatrixToNonJittered(Camera.StereoscopicEye.Left); // device to unjittered
+                m_Camera.CopyStereoDeviceProjectionMatrixToNonJittered(Camera.StereoscopicEye.Right);
+                m_Camera.projectionMatrix = m_Camera.GetStereoNonJitteredProjectionMatrix(Camera.StereoscopicEye.Left);
+                m_Camera.nonJitteredProjectionMatrix = m_Camera.projectionMatrix;
+                m_Camera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Left, m_Camera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Left));
+                m_Camera.SetStereoProjectionMatrix(Camera.StereoscopicEye.Right, m_Camera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Right));
                 Shader.SetGlobalFloat(ShaderIDs.RenderViewportScaleFactor, XRSettings.renderViewportScale);
             }
             else
@@ -689,10 +695,11 @@ namespace UnityEngine.Rendering.PostProcessing
                     m_Camera.usePhysicalProperties = true;
                 else
 #endif
-                m_Camera.ResetProjectionMatrix();
-
+                     m_Camera.ResetProjectionMatrix();
+      
                 if (m_CurrentContext.stereoActive)
                 {
+                    m_Camera.projectionMatrix = m_Camera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Left);
                     if (RuntimeUtilities.isSinglePassStereoEnabled || m_Camera.stereoActiveEye == Camera.MonoOrStereoscopicEye.Right)
                         m_Camera.ResetStereoProjectionMatrices();
                 }
