@@ -187,7 +187,7 @@ void GetCountAndStartTile(PositionInputs posInput, uint lightCategory, out uint 
 #endif
 
     // The first entry inside a tile is the number of light for lightCategory (thus the +0)
-    lightCount = g_vLightListTile[LIGHT_DWORD_PER_FPL_TILE * tileOffset + 0] & 0xffff;
+    lightCount = g_vLightListTile[LIGHT_DWORD_PER_FPTL_TILE * tileOffset + 0] & 0xffff;
     start = tileOffset;
 }
 
@@ -207,7 +207,7 @@ uint FetchIndex(uint tileOffset, uint lightOffset)
 {
     const uint lightOffsetPlusOne = lightOffset + 1; // Add +1 as first slot is reserved to store number of light
     // Light index are store on 16bit
-    return (g_vLightListTile[LIGHT_DWORD_PER_FPL_TILE * tileOffset + (lightOffsetPlusOne >> 1)] >> ((lightOffsetPlusOne & 1) * 16)) & 0xffff;
+    return (g_vLightListTile[LIGHT_DWORD_PER_FPTL_TILE * tileOffset + (lightOffsetPlusOne >> 1)] >> ((lightOffsetPlusOne & 1) * 16)) & 0xffff;
 }
 
 #elif defined(USE_CLUSTERED_LIGHTLIST)
@@ -346,16 +346,17 @@ EnvLightData FetchEnvLight(uint index)
     return _EnvLightDatas[index];
 }
 
-// In the first 8 bits of the target we store the max fade of the contact shadows as a byte
+// In the first bits of the target we store the max fade of the contact shadows as a byte.
+//By default its 8 bits for the fade and 24 for the mask, please check the LightLoop.cs definitions.
 void UnpackContactShadowData(uint contactShadowData, out float fade, out uint mask)
 {
-    fade = float(contactShadowData >> 24) / 255.0;
-    mask = contactShadowData & 0xFFFFFF; // store only the first 24 bits which represent
+    fade = float(contactShadowData >> CONTACT_SHADOW_MASK_BITS) / ((float)CONTACT_SHADOW_FADE_MASK);
+    mask = contactShadowData & CONTACT_SHADOW_MASK_MASK; // store only the first 24 bits which represent
 }
 
 uint PackContactShadowData(float fade, uint mask)
 {
-    uint fadeAsByte = (uint(saturate(fade) * 255) << 24);
+    uint fadeAsByte = (uint(saturate(fade) * CONTACT_SHADOW_FADE_MASK) << CONTACT_SHADOW_MASK_BITS);
 
     return fadeAsByte | mask;
 }

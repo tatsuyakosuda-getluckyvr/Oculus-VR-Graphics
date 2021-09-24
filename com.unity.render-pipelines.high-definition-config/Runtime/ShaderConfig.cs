@@ -6,8 +6,7 @@ namespace UnityEngine.Rendering.HighDefinition
 {
     internal enum FPTLMaxLightSizes
     {
-        Small = 23,
-        Medium = 31,
+        Small = 31,
         High = 63
     }
 

@@ -583,7 +583,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 // note that nrTiles include the viewCount in allocation below
                 // Tile buffers
                 passData.output.lightList = builder.WriteComputeBuffer(
-                    renderGraph.CreateComputeBuffer(new ComputeBufferDesc((int)LightCategory.Count * LightDefinitions.s_LightDwordPerFplTile * nrTiles, sizeof(uint)) { name = "LightList" }));
+                    renderGraph.CreateComputeBuffer(new ComputeBufferDesc((int)LightCategory.Count * LightDefinitions.s_LightDwordPerFptlTile * nrTiles, sizeof(uint)) { name = "LightList" }));
                 passData.output.tileList = builder.WriteComputeBuffer(
                     renderGraph.CreateComputeBuffer(new ComputeBufferDesc(LightDefinitions.s_NumFeatureVariants * nrTiles, sizeof(uint)) { name = "TileList" }));
                 passData.output.tileFeatureFlags = builder.WriteComputeBuffer(
