@@ -28,6 +28,15 @@ URP_Performance_BoatAttack_OSX_Metal_performance_playmode_runtime_mono_Linear_tr
       -  cd TestProjects/BoatAttack && git checkout $BOAT_ATTACK_REVISION
       -  brew tap --force-auto-update unity/unity git@github.cds.internal.unity3d.com:unity/homebrew-unity.git
       -  brew install unity-config
+
+      # Setting up ssh service account (gfx-sdets@unity3d.com)
+      - echo "aG9zdCBnaXRodWIuY2RzLmludGVybmFsLnVuaXR5M2QuY29tCiAgSG9zdE5hbWUgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIElkZW50aXR5RmlsZSAvVXNlcnMvYm9ra2VuLy5zc2gvaWRfcnNhX2Nkc19naXRodWIKICBTdHJpY3RIb3N0S2V5Q2hlY2tpbmcgbm8KICBVc2VyIGdpdA==" | base64 -i - -d > ssh_config
+      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config
+      - echo $GITHUB_CDS_SSH_PRIVKEY | base64 -D -i - -o id_rsa_cds_github
+      - openssl dgst -sha256 id_rsa_cds_github || echo "could not digest file"
+      - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github
+      - ssh bokken@$BOKKEN_DEVICE_IP "chmod 400 ~/.ssh/*"
+
       -  cd TestProjects/BoatAttack && unity-config project add dependency "com.unity.render-pipelines.core@file:../../../com.unity.render-pipelines.core" --project-path .
       -  cd TestProjects/BoatAttack && unity-config project add dependency "com.unity.render-pipelines.universal@file:../../../com.unity.render-pipelines.universal" --project-path .
       -  cd TestProjects/BoatAttack && unity-config project add dependency "com.unity.shadergraph@file:../../../com.unity.shadergraph" --project-path .
