@@ -29,13 +29,11 @@ URP_Performance_BoatAttack_OSX_Metal_performance_playmode_runtime_mono_Linear_tr
       -  brew tap --force-auto-update unity/unity git@github.cds.internal.unity3d.com:unity/homebrew-unity.git
       -  brew install unity-config
 
-      # Setting up ssh service account (gfx-sdets@unity3d.com) to download the referenced packages via ssh:
-      # Changes are only meant to kick off a single one off job and will be implemented properly with greater familarity.
+      # Create ssh config entry for cds.github.com and append it:
+      - echo "Cmhvc3QgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIEhvc3ROYW1lIGdpdGh1Yi5jZHMuaW50ZXJuYWwudW5pdHkzZC5jb20KICBJZGVudGl0eUZpbGUgL1VzZXJzL2Jva2tlbi8uc3NoL2lkX3JzYV9jZHNfZ2l0aHViCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCiAgVXNlciBnaXQ=" | base64 -i - -D >> ssh_config
+      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config_cds_github
+      - ssh bokken@$BOKKEN_DEVICE_IP "bash -lc 'cat ~/.ssh/config_cds_github >> ~/.ssh/config && rm ~/.ssh/config_cds_github && cat ~/.ssh/config'"
 
-      # The following command will simply generate a config file, the contents are not sensitive:
-      - echo "aG9zdCBnaXRodWIuY2RzLmludGVybmFsLnVuaXR5M2QuY29tCiAgSG9zdE5hbWUgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIElkZW50aXR5RmlsZSAvVXNlcnMvYm9ra2VuLy5zc2gvaWRfcnNhX2Nkc19naXRodWIKICBTdHJpY3RIb3N0S2V5Q2hlY2tpbmcgbm8KICBVc2VyIGdpdA==" | base64 -i - -D >> ssh_config
-
-      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config
       - echo $GITHUB_CDS_SSH_PRIVKEY | base64 -D -i - -o id_rsa_cds_github
       - openssl dgst -sha256 id_rsa_cds_github || echo "could not digest file"
       - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github
