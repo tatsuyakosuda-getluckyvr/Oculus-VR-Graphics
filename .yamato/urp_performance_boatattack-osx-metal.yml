@@ -23,14 +23,15 @@ URP_Performance_BoatAttack_OSX_Metal_performance_playmode_runtime_mono_Linear_tr
         UTR_VERSION: "current"
         TEST_FILTER: .*
     commands:
+      - sed -i '' 's/172\.28\.218\.\*/172\.28\.224\.\*/g' ~/.ssh/config
+
       - echo $GITHUB_CDS_SSH_PRIVKEY | base64 -D -i - -o id_rsa_cds_github
       - openssl dgst -sha256 id_rsa_cds_github || echo "could not digest key"
 
-      - ssh bokken@$BOKKEN_DEVICE_IP "chmod 600 ~/.ssh/*"
-      - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github
+      - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github && rm id_rsa_cds_github
 
       - echo "Cmhvc3QgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIEhvc3ROYW1lIGdpdGh1Yi5jZHMuaW50ZXJuYWwudW5pdHkzZC5jb20KICBJZGVudGl0eUZpbGUgL1VzZXJzL2Jva2tlbi8uc3NoL2lkX3JzYV9jZHNfZ2l0aHViCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCiAgVXNlciBnaXQ=" | base64 -i - -D >> ssh_config
-      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config_cds_github
+      - scp ssh_config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config_cds_github
       - ssh bokken@$BOKKEN_DEVICE_IP "cat ~/.ssh/config_cds_github >> ~/.ssh/config && rm ~/.ssh/config_cds_github && cat ~/.ssh/config"
 
       - ssh bokken@$BOKKEN_DEVICE_IP "chmod 400 ~/.ssh/*"
