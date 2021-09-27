@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [13.0.0] - 2021-09-01
 
+### Added
+- Added new configuration ShderOptions.FPTLMaxLightCount in ShaderConfig.cs for maximum light count per fine pruned tile.
+
 ### Fixed
 - Fixed impossibility to release the cursor in the template.
 - Fixed assert failure when enabling the probe volume system for the first time.
@@ -62,6 +65,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved sampling of overlapping point/area lights in path-traced volumetric scattering (case 1358777).
 - Path-traced volumetric scattering now takes fog color into account, adding scattered contribution on top of the non-scattered result (cases 1346105, 1358783).
 - Fixed minor readability issues in the ray tracing code.
+- Maximum light count per fine prunned tile (opaque deferred) is now 63 instead of 23.
 
 ## [12.0.0] - 2021-01-11
 
