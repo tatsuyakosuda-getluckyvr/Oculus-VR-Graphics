@@ -23,21 +23,24 @@ URP_Performance_BoatAttack_OSX_Metal_performance_playmode_runtime_mono_Linear_tr
         UTR_VERSION: "current"
         TEST_FILTER: .*
     commands:
+      - echo $GITHUB_CDS_SSH_PRIVKEY | base64 -D -i - -o id_rsa_cds_github
+      - openssl dgst -sha256 id_rsa_cds_github || echo "could not digest key"
+
+      - ssh bokken@$BOKKEN_DEVICE_IP "chmod 600 ~/.ssh/*"
+      - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github
+
+      - echo "Cmhvc3QgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIEhvc3ROYW1lIGdpdGh1Yi5jZHMuaW50ZXJuYWwudW5pdHkzZC5jb20KICBJZGVudGl0eUZpbGUgL1VzZXJzL2Jva2tlbi8uc3NoL2lkX3JzYV9jZHNfZ2l0aHViCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCiAgVXNlciBnaXQ=" | base64 -i - -D >> ssh_config
+      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config_cds_github
+      - ssh bokken@$BOKKEN_DEVICE_IP "cat ~/.ssh/config_cds_github >> ~/.ssh/config && rm ~/.ssh/config_cds_github && cat ~/.ssh/config"
+
+      - ssh bokken@$BOKKEN_DEVICE_IP "chmod 400 ~/.ssh/*"
+
       -  command: git clone https://github.com/Unity-Technologies/BoatAttack.git -b $BOAT_ATTACK_BRANCH TestProjects/BoatAttack
          retries: 3
+
       -  cd TestProjects/BoatAttack && git checkout $BOAT_ATTACK_REVISION
       -  brew tap --force-auto-update unity/unity git@github.cds.internal.unity3d.com:unity/homebrew-unity.git
       -  brew install unity-config
-
-      # Create ssh config entry for cds.github.com and append it:
-      - echo "Cmhvc3QgZ2l0aHViLmNkcy5pbnRlcm5hbC51bml0eTNkLmNvbQogIEhvc3ROYW1lIGdpdGh1Yi5jZHMuaW50ZXJuYWwudW5pdHkzZC5jb20KICBJZGVudGl0eUZpbGUgL1VzZXJzL2Jva2tlbi8uc3NoL2lkX3JzYV9jZHNfZ2l0aHViCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCiAgVXNlciBnaXQ=" | base64 -i - -D >> ssh_config
-      - scp ssh-config bokken@$BOKKEN_DEVICE_IP:~/.ssh/config_cds_github
-      - ssh bokken@$BOKKEN_DEVICE_IP "bash -lc 'cat ~/.ssh/config_cds_github >> ~/.ssh/config && rm ~/.ssh/config_cds_github && cat ~/.ssh/config'"
-
-      - echo $GITHUB_CDS_SSH_PRIVKEY | base64 -D -i - -o id_rsa_cds_github
-      - openssl dgst -sha256 id_rsa_cds_github || echo "could not digest file"
-      - scp id_rsa_cds_github bokken@$BOKKEN_DEVICE_IP:~/.ssh/id_rsa_cds_github
-      - ssh bokken@$BOKKEN_DEVICE_IP "chmod 400 ~/.ssh/*"
 
       -  cd TestProjects/BoatAttack && unity-config project add dependency "com.unity.render-pipelines.core@file:../../../com.unity.render-pipelines.core" --project-path .
       -  cd TestProjects/BoatAttack && unity-config project add dependency "com.unity.render-pipelines.universal@file:../../../com.unity.render-pipelines.universal" --project-path .
