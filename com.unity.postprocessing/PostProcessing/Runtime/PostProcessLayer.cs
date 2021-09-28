@@ -695,7 +695,7 @@ namespace UnityEngine.Rendering.PostProcessing
                     m_Camera.usePhysicalProperties = true;
                 else
 #endif
-                 m_Camera.ResetProjectionMatrix();
+                m_Camera.ResetProjectionMatrix();
       
                 if (m_CurrentContext.stereoActive)
                 {
