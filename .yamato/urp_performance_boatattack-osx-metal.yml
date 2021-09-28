@@ -12,7 +12,7 @@ URP_Performance_BoatAttack_OSX_Metal_performance_playmode_runtime_mono_Linear_tr
     name: URP_Performance_BoatAttack on OSX_Metal_performance_playmode_runtime_mono_Linear on version trunk
     agent:
         type: Unity::metal::macmini
-        image: slough-ops/macos-10.14-xcode:stable
+        image: slough-ops/macos-11-xcode:stable
         flavor: m1.mac
     variables:
         UPM_REGISTRY: https://artifactory-slo.bf.unity3d.com/artifactory/api/npm/upm-candidates
