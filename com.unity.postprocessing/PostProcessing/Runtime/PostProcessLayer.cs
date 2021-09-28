@@ -696,7 +696,7 @@ namespace UnityEngine.Rendering.PostProcessing
                 else
 #endif
                 m_Camera.ResetProjectionMatrix();
-      
+
                 if (m_CurrentContext.stereoActive)
                 {
                     m_Camera.projectionMatrix = m_Camera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Left);
