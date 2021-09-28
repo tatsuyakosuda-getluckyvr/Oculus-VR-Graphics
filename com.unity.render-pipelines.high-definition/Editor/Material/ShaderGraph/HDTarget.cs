@@ -1060,6 +1060,8 @@ namespace UnityEditor.Rendering.HighDefinition.ShaderGraph
         public const string kPassForwardUnlit = "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForwardUnlit.hlsl";
         public const string kPassConstant = "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassConstant.hlsl";
         public const string kPassFullScreenDebug = "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassFullScreenDebug.hlsl";
+        public const string kPassWaterForward = "Packages/com.unity.render-pipelines.high-definition/Runtime/Water/ShaderPassWaterForward.hlsl";
+
 
         public static IncludeCollection MinimalCorePregraph = new IncludeCollection
         {

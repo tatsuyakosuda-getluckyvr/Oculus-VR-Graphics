@@ -101,6 +101,10 @@ namespace UnityEngine.Rendering.HighDefinition
         VolumetricCloudMapGeneration,
         VolumetricCloudsAmbientProbe,
 
+        // Water surface
+        WaterSurfaceUpdate,
+        WaterSurfaceRendering,
+
         // RT Cluster
         RaytracingBuildCluster,
         RaytracingCullLights,

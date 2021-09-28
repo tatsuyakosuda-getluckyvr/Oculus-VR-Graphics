@@ -376,6 +376,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _ShaderVariablesRaytracingLightLoop = Shader.PropertyToID("ShaderVariablesRaytracingLightLoop");
         public static readonly int _ShaderVariablesDebugDisplay = Shader.PropertyToID("ShaderVariablesDebugDisplay");
         public static readonly int _ShaderVariablesClouds = Shader.PropertyToID("ShaderVariablesClouds");
+        public static readonly int _ShaderVariablesWater = Shader.PropertyToID("ShaderVariablesWater");
 
         public static readonly int _SSSBufferTexture = Shader.PropertyToID("_SSSBufferTexture");
         public static readonly int _NormalBufferTexture = Shader.PropertyToID("_NormalBufferTexture");
@@ -496,6 +497,24 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _RainMap = Shader.PropertyToID("_RainMap");
         public static readonly int _CloudMapResolution = Shader.PropertyToID("_CloudMapResolution");
         public static readonly int _CloudsPixelCoordToViewDirWS = Shader.PropertyToID("_CloudsPixelCoordToViewDirWS");
+
+        // Water
+        public static readonly int _H0BufferRW = Shader.PropertyToID("_H0BufferRW");
+        public static readonly int _H0Buffer = Shader.PropertyToID("_H0Buffer");
+        public static readonly int _HtRealBufferRW = Shader.PropertyToID("_HtRealBufferRW");
+        public static readonly int _HtImaginaryBufferRW = Shader.PropertyToID("_HtImaginaryBufferRW");
+        public static readonly int _FFTRealBuffer = Shader.PropertyToID("_FFTRealBuffer");
+        public static readonly int _FFTImaginaryBuffer = Shader.PropertyToID("_FFTImaginaryBuffer");
+        public static readonly int _FFTRealBufferRW = Shader.PropertyToID("_FFTRealBufferRW");
+        public static readonly int _FFTImaginaryBufferRW = Shader.PropertyToID("_FFTImaginaryBufferRW");
+        public static readonly int _DisplacementBuffer = Shader.PropertyToID("_DisplacementBuffer");
+        public static readonly int _NormalBufferRW = Shader.PropertyToID("_NormalBufferRW");
+        public static readonly int _NormalBuffer = Shader.PropertyToID("_NormalBuffer");
+        public static readonly int _PatchOffset = Shader.PropertyToID("_PatchOffset");
+        public static readonly int _GridRenderingResolution = Shader.PropertyToID("_GridRenderingResolution");
+        public static readonly int _CameraOffset = Shader.PropertyToID("_CameraOffset");
+        public static readonly int _GridSize = Shader.PropertyToID("_GridSize");
+        public static readonly int _GlobalSurface = Shader.PropertyToID("_GlobalSurface");
 
         public static readonly int _Flowmap = Shader.PropertyToID("_Flowmap");
         public static readonly int _FlowmapParam = Shader.PropertyToID("_FlowmapParam");

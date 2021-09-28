@@ -82,6 +82,8 @@ AttributesMesh ApplyMeshModification(AttributesMesh input, float3 timeParameters
     $VertexDescription.Position: input.positionOS = vertexDescription.Position;
     $VertexDescription.Normal:   input.normalOS = vertexDescription.Normal;
     $VertexDescription.Tangent:  input.tangentOS.xyz = vertexDescription.Tangent;
+    $VertexDescription.uv0:      input.uv0 = vertexDescription.uv0;
+    $VertexDescription.uv1:      input.uv1 = vertexDescription.uv1;
 
     $splice(CustomInterpolatorVertMeshCustomInterpolation)
 
