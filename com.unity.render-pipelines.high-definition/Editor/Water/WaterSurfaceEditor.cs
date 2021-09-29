@@ -14,6 +14,10 @@ namespace UnityEditor.Rendering.HighDefinition
         SerializedProperty m_WaveAmplitude;
         SerializedProperty m_Choppiness;
         SerializedProperty m_Material;
+        SerializedProperty m_MaxAbsorptionDistance;
+        SerializedProperty m_TransparentColor;
+        SerializedProperty m_ScatteringColor;
+        SerializedProperty m_ScatteringFactor;
 
         void OnEnable()
         {
@@ -26,15 +30,19 @@ namespace UnityEditor.Rendering.HighDefinition
             m_WaveAmplitude = o.Find(x => x.waveAmplitude);
             m_Choppiness = o.Find(x => x.choppiness);
             m_Material = o.Find(x => x.material);
+            m_MaxAbsorptionDistance = o.Find(x => x.maxAbsorptionDistance);
+            m_TransparentColor = o.Find(x => x.transparentColor);
+            m_ScatteringColor = o.Find(x => x.scatteringColor);
+            m_ScatteringFactor = o.Find(x => x.scatteringFactor);
         }
 
-        void SanitizeVector4(SerializedProperty property)
+        void SanitizeVector4(SerializedProperty property, float minValue, float maxValue)
         {
             Vector4 vec4 = property.vector4Value;
-            vec4.x = Mathf.Max(0, vec4.x);
-            vec4.y = Mathf.Max(0, vec4.y);
-            vec4.z = Mathf.Max(0, vec4.z);
-            vec4.w = Mathf.Max(0, vec4.w);
+            vec4.x = Mathf.Clamp(vec4.x, minValue, maxValue);
+            vec4.y = Mathf.Clamp(vec4.y, minValue, maxValue);
+            vec4.z = Mathf.Clamp(vec4.z, minValue, maxValue);
+            vec4.w = Mathf.Clamp(vec4.w, minValue, maxValue);
             property.vector4Value = vec4;
         }
 
@@ -62,14 +70,19 @@ namespace UnityEditor.Rendering.HighDefinition
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_WaveAmplitude);
             if (EditorGUI.EndChangeCheck())
-                SanitizeVector4(m_WaveAmplitude);
+                SanitizeVector4(m_WaveAmplitude, 0.0f, 10.0f);
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_Choppiness);
             if (EditorGUI.EndChangeCheck())
-                SanitizeVector4(m_Choppiness);
+                SanitizeVector4(m_Choppiness, 0.0f, 1.0f);
 
             EditorGUILayout.PropertyField(m_Material);
+            EditorGUILayout.PropertyField(m_MaxAbsorptionDistance);
+            m_MaxAbsorptionDistance.floatValue = Mathf.Clamp(m_MaxAbsorptionDistance.floatValue, 0.0f, 100.0f);
+            EditorGUILayout.PropertyField(m_TransparentColor);
+            EditorGUILayout.PropertyField(m_ScatteringColor);
+            m_ScatteringFactor.floatValue = EditorGUILayout.Slider(m_ScatteringFactor.floatValue, 0.0f, 1.0f);
 
             serializedObject.ApplyModifiedProperties();
         }

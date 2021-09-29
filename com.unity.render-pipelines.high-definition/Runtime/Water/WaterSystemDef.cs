@@ -10,7 +10,7 @@ namespace UnityEngine.Rendering.HighDefinition
         // Resolution at which the signal is evaluated
         public uint _BandResolution;
         // Speed of the wind in km/h (or is it m/s?)
-        public float _WindSpeed;
+        public float _Pad0W;
         // Factor that attenuates the direction of the ocean
         public float _DirectionDampener;
         // Dispersion time
@@ -19,7 +19,8 @@ namespace UnityEngine.Rendering.HighDefinition
         public float _PatchSizeScaleRatio;
         // Maximum height of the waves
         public float _MaxWaveHeight;
-        public Vector2 _Padding0;
+        public float _WaveTipsScatteringCoefficient; 
+        public float _CloudTexturedAmount;
 
         // Patch size for a given band
         public Vector4 _BandPatchSize;
@@ -52,10 +53,28 @@ namespace UnityEngine.Rendering.HighDefinition
         public float _WaveTipsScatteringOffset;
         public float _SSSMaskCoefficient;
 
+        // Scattering
+        public Vector3 _ScatteringColorTips;
+        public float _MaxRefractionDepth;
+
+        public float _Refraction;
+        public float _RefractionLow;
+        public float _MaxAbsorptionDistance;
+        public float _ScatteringBlur;
+
+        public Vector3 _TransparencyColor;
+        public float _OutScatteringCoefficient;
+
+        public Vector2 _Pad1W;
+        public float _FoamCloudLowFrequencyTilling;
+        public float _ScatteringIntensity;
+        public Vector4 _ScatteringLambertLighting;
+
         // Two dimensional vector that describes the wind direction
         public Vector2 _WindDirection;
         // Two dimensional vector that describes the wind current
         public Vector2 _WindCurrent;
+        public Vector4 _WindSpeed;
     }
 
     [GenerateHLSL(needAccessors = false, generateCBuffer = true)]
@@ -67,7 +86,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public Vector3 _PatchOffset;
         public uint _GridRenderingResolution;
 
-        public Vector3 _Padding1;
+        public Vector3 _Padding2;
         public float _GlobalSurface;
     }
 }

@@ -30,7 +30,7 @@ void InitializePhillipsSpectrum(uint3 currentThread : SV_DispatchThreadID)
     float2 E = float2(GaussianDistribution(u0, v0), GaussianDistribution(u1, v1)) * 0.70710678118f;
     float2 nDC = (currentThread.xy / (float)_BandResolution - 0.5f) * 2.0f;
     float2 k = (TWO_PI * nDC) / _BandPatchSize[currentThread.z] * PHILLIPS_PATCH_SCALAR;
-    float  P = Phillips(k, _WindDirection, _WindSpeed, _DirectionDampener);
+    float  P = Phillips(k, _WindDirection, _WindSpeed[currentThread.z], _DirectionDampener);
 	_H0BufferRW[int3(currentThread.xy, currentThread.z)] = E * P * PHILLIPS_AMPLITUDE_SCALAR;
 }
 
@@ -118,7 +118,7 @@ void EvaluateNormals(uint3 currentThread : SV_DispatchThreadID)
     float previousFoam = _NormalBufferRW[int3(coord, bandIdx)].z;
 
     // Combine the foam with the previous iteration foam
-    float newFoam = previousFoam * 0.95 + foam * 0.05;
+    float newFoam = previousFoam * 0.995 + foam * 0.5;
 
     // Output the normal and foam
     _NormalBufferRW[int3(coord, bandIdx)] = float4(surfaceGradient, 0, 1.0);

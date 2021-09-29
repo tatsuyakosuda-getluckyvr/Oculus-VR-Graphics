@@ -60,11 +60,12 @@ namespace UnityEngine.Rendering.HighDefinition
         const int k_OceanMinGridSize = 2;
         const float k_PhillipsPatchScalar = 1000.0f;
         const float k_PhillipsAmplitudeScalar = 15.0f;
-        const float k_OceanAmplitudeNormalization = 10.0f;
-        const float k_OceanChopinessNormalization = 3.0f;
+        const float k_WaterAmplitudeNormalization = 10.0f;
+        const float k_WaterChopinessNormalization = 1.5f;
         const float k_PhillipsGravityConstant = 9.8f;
         const float k_PhillipsWindScalar = 1.0f / k_PhillipsGravityConstant; // Is this a coincidence? Found '0.10146f' by curve fitting
         const float k_PhillipsWindFalloffCoefficient = 0.00034060072f; // PI/(9.8^4);
+        const float k_HurricanWindScalar = 0.6148388f * 0.5f;// Half the maximum Max Wind (61.5f) for a 1000m patch
 
         // Simulation shader and kernels
         ComputeShader m_WaterSimulationCS;
@@ -210,6 +211,13 @@ namespace UnityEngine.Rendering.HighDefinition
             outCurrentDirection.Set(currentDirectionX * oceanCurrent, currentDirectionY * oceanCurrent);
         }
 
+        float GetWindSpeed(float windSpeed, float resolution)
+        {
+            float effectOfResolutionOnWindSpeed = Mathf.Sqrt(resolution / 32);
+            effectOfResolutionOnWindSpeed *= 0.25f;
+            return windSpeed * k_HurricanWindScalar * effectOfResolutionOnWindSpeed;
+        }
+
         static public float MaximumWaveHeightFunction(float windSpeed, float S)
         {
             if (windSpeed < 0) windSpeed = 0;
@@ -231,7 +239,7 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 float patchAmplitude = oceanWaveAmplitudeScalars[i] * (oceanMaxPatchSize / k_PhillipsPatchScalar);
                 float L = MaximumWindForPatch(k_PhillipsPatchScalar) / MaximumWindForPatch(oceanMaxPatchSize);
-                float A = k_OceanAmplitudeNormalization * patchAmplitude;
+                float A = k_WaterAmplitudeNormalization * patchAmplitude;
                 float normalizedMaximumHeight = MaximumWaveHeightFunction(oceanWindSpeed * L, k_PhillipsWindFalloffCoefficient);
                 maxiumumWaveHeight = Mathf.Max(A * normalizedMaximumHeight, maxiumumWaveHeight);
             }
@@ -240,6 +248,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void UpdateShaderVariablesOcean(float dispersionTime, WaterSurface currentWater, ref ShaderVariablesWater cb)
         {
+            
+
             // Evaluate the ocean time
             float oceanTime = 0.0f;
             float dynamicOceanDispersionTime = 0.0f;
@@ -247,18 +257,21 @@ namespace UnityEngine.Rendering.HighDefinition
 
             // Resolution at which the simulation is ran
             cb._BandResolution = (uint)m_WaterBandResolution;
-            cb._WindSpeed = 30.0f;
             cb._DirectionDampener = 0.5f;
             cb._DispersionTime = dynamicOceanDispersionTime;
 
             cb._PatchSizeScaleRatio = Mathf.Lerp(1.0f, 0.5f, currentWater.oceanMinPatchSize / currentWater.oceanMaxPatchSize);
-            cb._MaxWaveHeight = ComputeMaximumWaveHeight(currentWater.waveAmplitude, currentWater.oceanMaxPatchSize, cb._WindSpeed);
+            cb._MaxWaveHeight = ComputeMaximumWaveHeight(currentWater.waveAmplitude, currentWater.oceanMaxPatchSize, 30.0f);
 
             float patchSizeScaleFactor = Mathf.Pow(currentWater.oceanMaxPatchSize / currentWater.oceanMinPatchSize, 1.0f / (k_WaterHighBandCount - 1));
             cb._BandPatchUVScale = new Vector4(1.0f, patchSizeScaleFactor, (patchSizeScaleFactor * patchSizeScaleFactor), (patchSizeScaleFactor * patchSizeScaleFactor * patchSizeScaleFactor));
             cb._BandPatchSize = new Vector4(currentWater.oceanMaxPatchSize, currentWater.oceanMaxPatchSize / cb._BandPatchUVScale.y, currentWater.oceanMaxPatchSize / cb._BandPatchUVScale.z, currentWater.oceanMaxPatchSize / cb._BandPatchUVScale.w);
             cb._WaveAmplitude = currentWater.waveAmplitude;
-            cb._Choppiness = currentWater.choppiness;
+
+            cb._Choppiness.x = currentWater.waveAmplitude.x * currentWater.choppiness.x * k_WaterChopinessNormalization;
+            cb._Choppiness.y = currentWater.waveAmplitude.y * currentWater.choppiness.y * k_WaterChopinessNormalization;
+            cb._Choppiness.z = currentWater.waveAmplitude.z * currentWater.choppiness.z * k_WaterChopinessNormalization;
+            cb._Choppiness.w = currentWater.waveAmplitude.w * currentWater.choppiness.w * k_WaterChopinessNormalization;
 
             GetWaterWindDirectionAndCurrent(oceanTime, ref cb._WindDirection, ref cb._WindCurrent);
 
@@ -288,6 +301,38 @@ namespace UnityEngine.Rendering.HighDefinition
             cb._SurfaceFoamNormalsWeight = 1.0f;
             cb._WaveTipsScatteringOffset = 0.0f;
             cb._SSSMaskCoefficient = 1000.0f;
+
+            cb._ScatteringColorTips = new Vector3(currentWater.scatteringColor.r, currentWater.scatteringColor.g, currentWater.scatteringColor.b);
+            cb._MaxRefractionDepth = 25.0f;
+
+            cb._Refraction = 0.5f;
+            cb._RefractionLow = 2.0f;
+            cb._MaxAbsorptionDistance = currentWater.maxAbsorptionDistance;
+
+            cb._OutScatteringCoefficient = -Mathf.Log(0.02f) / currentWater.maxAbsorptionDistance;
+            cb._TransparencyColor = new Vector3(currentWater.transparentColor.r, currentWater.transparentColor.g, currentWater.transparentColor.b);
+
+            cb._ScatteringIntensity = currentWater.scatteringFactor * 0.5f;
+            cb._FoamCloudLowFrequencyTilling = 5.0f;
+
+            cb._CloudTexturedAmount = 1.0f;
+
+            float scatteringLambertLightingNear = 0.6f;
+            float scatteringLambertLightingFar = 0.06f;
+            cb._ScatteringLambertLighting = new Vector4(scatteringLambertLightingNear, scatteringLambertLightingFar, Mathf.Lerp(0.5f, 1.0f, scatteringLambertLightingNear), Mathf.Lerp(0.5f, 1.0f, scatteringLambertLightingFar));
+
+            Vector4 normalizedWindScalar = new Vector4(0, 0, 0, 0);
+            Vector4 maxWindForCurrentPatch = new Vector4(0, 0, 0, 0); ;
+            Vector4 normalizedwindExponentialDecay = new Vector4(0, 0, 0, 0);
+
+            float maxWindForBand0 = MaximumWindForPatch(cb._BandPatchSize.x);
+            // Curve the normalized wind value by { 1, 1/3^2, 1/3^4, 1/3^6 }. It's an arbitrary curve, there may be a
+            // more intuitive function to use.
+            cb._WindSpeed.x = GetWindSpeed(30.0f, (int)m_WaterBandResolution) * MaximumWindForPatch(cb._BandPatchSize.x);
+            cb._WindSpeed.y = GetWindSpeed(30.0f, (int)m_WaterBandResolution) * MaximumWindForPatch(cb._BandPatchSize.y) * Mathf.Pow(0.7f, 0.333333f * 2);
+            cb._WindSpeed.z = GetWindSpeed(30.0f, (int)m_WaterBandResolution) * MaximumWindForPatch(cb._BandPatchSize.z) * Mathf.Pow(0.7f, 0.333333f * 4);
+            cb._WindSpeed.w = GetWindSpeed(30.0f, (int)m_WaterBandResolution) * MaximumWindForPatch(cb._BandPatchSize.w) * Mathf.Pow(0.7f, 0.333333f * 6);
+            cb._WindSpeed /= maxWindForBand0;
 
             cb._WindDirection = Vector2.zero;
             cb._WindCurrent = Vector2.zero;
@@ -429,11 +474,12 @@ namespace UnityEngine.Rendering.HighDefinition
             public TextureHandle normalBuffer;
 
             // Water rendered to this buffer
+            public TextureHandle colorPyramid;
             public TextureHandle colorBuffer;
             public TextureHandle depthBuffer;
         }
 
-        void RenderWaterSurfaces(RenderGraph renderGraph, HDCamera hdCamera, TextureHandle colorBuffer, TextureHandle depthBuffer)
+        void RenderWaterSurfaces(RenderGraph renderGraph, HDCamera hdCamera, TextureHandle colorBuffer, TextureHandle depthBuffer, TextureHandle colorPyramid)
         {
             // If the ocean is disabled, no need to render or simulate
             WaterRendering settings = hdCamera.volumeStack.GetComponent<WaterRendering>();
@@ -464,6 +510,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     // Import all the textures into the system
                     passData.displacementBuffer = renderGraph.ImportTexture(currentWater.simulation.m_DisplacementBuffer);
                     passData.normalBuffer = renderGraph.ImportTexture(currentWater.simulation.m_NormalBuffer);
+                    passData.colorPyramid = builder.ReadTexture(colorPyramid);
 
                     // Request the output textures
                     passData.colorBuffer = builder.WriteTexture(colorBuffer);
@@ -485,6 +532,8 @@ namespace UnityEngine.Rendering.HighDefinition
                             // Raise the keyword if it should be raised
                             CoreUtils.SetKeyword(ctx.cmd, "HIGH_RESOLUTION_WATER", data.parameters.highBandCount);
 
+                            data.parameters.mbp.SetTexture(HDShaderIDs._ColorPyramidTexture, data.colorPyramid);
+
                             if (data.parameters.global)
                             {
                                 // Prepare the oobb for the patches
@@ -493,7 +542,7 @@ namespace UnityEngine.Rendering.HighDefinition
                                 bbox.up = Vector3.forward;
                                 bbox.extentX = data.parameters.gridSize;
                                 bbox.extentY = data.parameters.gridSize;
-                                bbox.extentZ = k_OceanAmplitudeNormalization * 2.0f;
+                                bbox.extentZ = k_WaterAmplitudeNormalization * 2.0f;
 
                                 data.parameters.mbp.SetFloat(HDShaderIDs._GlobalSurface, 1.0f);
 

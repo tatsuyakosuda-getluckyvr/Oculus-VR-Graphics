@@ -10,8 +10,12 @@ namespace UnityEngine.Rendering.HighDefinition
         public float oceanMinPatchSize = 10.0f;
         public float oceanMaxPatchSize = 500.0f;
         public Vector4 waveAmplitude = new Vector4(2.0f, 2.0f, 2.0f, 2.0f);
-        public Vector4 choppiness = new Vector4(1.0f, 2.0f, 3.0f, 4.0f);
+        public Vector4 choppiness = new Vector4(0.5f, 0.5f, 0.5f, 0.5f);
         public Material material = null;
+        public float maxAbsorptionDistance = 10.0f;
+        public Color transparentColor = new Color(0.00f, 0.45f, 0.65f);
+        public Color scatteringColor = new Color(0.0f, 0.4f, 0.75f);
+        public float scatteringFactor = 1.0f;
 
         internal WaterSiumulationResources simulation = null;
 

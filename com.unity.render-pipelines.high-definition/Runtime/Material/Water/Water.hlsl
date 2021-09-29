@@ -611,7 +611,7 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked)
     // diffuse lighting has already multiply the albedo in ModifyBakedDiffuseLighting().
     // TODO: I wonder if there's a better way to slit the lighting between the foam surface and the volume. Must ask the HDRP folks
-    lightLoopOutput.diffuseLighting = lighting.direct.diffuse + builtinData.bakeDiffuseLighting + refraction;
+    lightLoopOutput.diffuseLighting = lighting.direct.diffuse + refraction;
     lightLoopOutput.specularLighting = lighting.direct.specular + lighting.indirect.specularReflected;
 
 #ifdef DEBUG_DISPLAY

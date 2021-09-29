@@ -8,12 +8,13 @@
 // PackingRules = Exact
 CBUFFER_START(ShaderVariablesWater)
     uint _BandResolution;
-    float _WindSpeed;
+    float _Pad0W;
     float _DirectionDampener;
     float _DispersionTime;
     float _PatchSizeScaleRatio;
     float _MaxWaveHeight;
-    float2 _Padding0;
+    float _WaveTipsScatteringCoefficient;
+    float _CloudTexturedAmount;
     float4 _BandPatchSize;
     float4 _BandPatchUVScale;
     float4 _WaveAmplitude;
@@ -36,8 +37,21 @@ CBUFFER_START(ShaderVariablesWater)
     float _SurfaceFoamNormalsWeight;
     float _WaveTipsScatteringOffset;
     float _SSSMaskCoefficient;
+    float3 _ScatteringColorTips;
+    float _MaxRefractionDepth;
+    float _Refraction;
+    float _RefractionLow;
+    float _MaxAbsorptionDistance;
+    float _ScatteringBlur;
+    float3 _TransparencyColor;
+    float _OutScatteringCoefficient;
+    float2 _Pad1W;
+    float _FoamCloudLowFrequencyTilling;
+    float _ScatteringIntensity;
+    float4 _ScatteringLambertLighting;
     float2 _WindDirection;
     float2 _WindCurrent;
+    float4 _WindSpeed;
 CBUFFER_END
 
 // Generated from UnityEngine.Rendering.HighDefinition.ShaderVariablesWaterRendering
@@ -47,7 +61,7 @@ CBUFFER_START(ShaderVariablesWaterRendering)
     float2 _GridSize;
     float3 _PatchOffset;
     uint _GridRenderingResolution;
-    float3 _Padding1;
+    float3 _Padding2;
     float _GlobalSurface;
 CBUFFER_END
 

@@ -191,22 +191,6 @@ struct OceanAdditionalData
     float simulationFoam;
 };
 
-// Should this be brought back in HDRP's 'ShaderLibrary\Filtering.hlsl'?
-float4 SampleTexture2DBicubic(TEXTURE2D_ARRAY_PARAM(tex, smp), float2 coord, float slice, float4 texSize)
-{
-    float2 xy = coord * texSize.xy + 0.5;
-    float2 ic = floor(xy);
-    float2 fc = frac(xy);
-
-    float2 weights[2], offsets[2];
-    BicubicFilter(fc, weights, offsets);
-
-    return weights[0].y * (weights[0].x * SAMPLE_TEXTURE2D_ARRAY(tex, smp, (ic + float2(offsets[0].x, offsets[0].y) - 0.5) * texSize.zw, slice).rgba  +
-                           weights[1].x * SAMPLE_TEXTURE2D_ARRAY(tex, smp, (ic + float2(offsets[1].x, offsets[0].y) - 0.5) * texSize.zw, slice).rgba) +
-           weights[1].y * (weights[0].x * SAMPLE_TEXTURE2D_ARRAY(tex, smp, (ic + float2(offsets[0].x, offsets[1].y) - 0.5) * texSize.zw, slice).rgba  +
-                           weights[1].x * SAMPLE_TEXTURE2D_ARRAY(tex, smp, (ic + float2(offsets[1].x, offsets[1].y) - 0.5) * texSize.zw, slice).rgba);
-}
-
 void EvaluateOceanAdditionalData(float3 positionAWS, out OceanAdditionalData oceanAdditionalData)
 {
     // Compute the simulation coordinates
@@ -219,14 +203,14 @@ void EvaluateOceanAdditionalData(float3 positionAWS, out OceanAdditionalData oce
     texSize.zw = 1.0f / _BandResolution;
 
     // First band
-    float4 additionalData = SampleTexture2DBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand0, 0, texSize);
+    float4 additionalData = SampleTexture2DArrayBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand0, 0, texSize);
     float3 surfaceGradient = float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.x;
     float3 lowFrequencySurfaceGradient = surfaceGradient;
     float3 phaseSurfaceGradient = surfaceGradient;
     float foam = additionalData.z;
 
     // Second band
-    additionalData = SampleTexture2DBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand1, 1, texSize);
+    additionalData = SampleTexture2DArrayBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand1, 1, texSize);
     surfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.y;
     lowFrequencySurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.y * 0.75;
     phaseSurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.y * 0.75;
@@ -234,19 +218,21 @@ void EvaluateOceanAdditionalData(float3 positionAWS, out OceanAdditionalData oce
 
 #if defined(HIGH_RESOLUTION_WATER)
     // Third band
-    additionalData = SampleTexture2DBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand2, 2, texSize);
+    additionalData = SampleTexture2DArrayBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand2, 2, texSize);
     surfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.z;
     lowFrequencySurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.z * 0.5;
     phaseSurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.z * 0.5;
     foam += additionalData.z;
 
     // Fourth band
-    additionalData = SampleTexture2DBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand3, 3, texSize);
+    additionalData = SampleTexture2DArrayBicubic(TEXTURE2D_ARRAY_ARGS(_NormalBuffer, s_linear_repeat_sampler), oceanCoord.uvBand3, 3, texSize);
     surfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.w;
     lowFrequencySurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.w * 0.25;
     phaseSurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.w * 0.25;
     foam += additionalData.z;
 #endif
+    
+    foam = 0;
 
     // Blend the various surface gradients
     oceanAdditionalData.surfaceGradient = surfaceGradient;
@@ -298,5 +284,57 @@ void EvaluateFoamData(float3 foamNormal, float3 lowFrequencySurfaceGradient,
     
     // Compute the surface gradient of the foam
     foamData.foamSurfaceGradient = SurfaceGradientFromPerturbedNormal(inputNormalWS, surfaceFoamNormals) * _SurfaceFoamNormalsWeight + lowFrequencySurfaceGradient;
+}
+
+#define OCEAN_BACKGROUND_ABSORPTION_DISTANCE 1000.f
+
+struct ScatteringData
+{
+    float3 scatteringColor;
+    float3 foamScatteringTint;
+    float3 refractionColor;
+};
+
+void EvaluateScatteringData(float3 waterPosRWS, float3 waterNormal, float3 lowFrequencyNormals, float2 screenPosition, 
+    float sssMask, float lowFrequencyHeight, float scatteringFoam,
+    out ScatteringData scatteringData)
+{
+    // Compute the position of the surface behind the water surface
+    float  underWaterDepth = SampleCameraDepth(screenPosition);
+    float3 underWaterRWS = ComputeWorldSpacePosition(screenPosition, underWaterDepth, UNITY_MATRIX_I_VP);
+
+    // Compute the distance between the ocean surface and the object behind
+    float underWaterDistance = underWaterDepth == UNITY_RAW_FAR_CLIP_VALUE ? OCEAN_BACKGROUND_ABSORPTION_DISTANCE : length(underWaterRWS - waterPosRWS);
+
+    // Evaluate the absorption tint
+    float3 absorptionCoefficients = underWaterDistance * _OutScatteringCoefficient * (1.f - _TransparencyColor);
+    float3 absorptionTint = exp(-absorptionCoefficients);
+
+    // Evlaute the scattering color (where the refraction doesn't happen)
+    float lambertCompensation = lerp(_ScatteringLambertLighting.z, _ScatteringLambertLighting.w, sssMask);
+    scatteringData.scatteringColor = _ScatteringColorTips * exp(-(1.f - _ScatteringColorTips)) * (1.f - absorptionTint) * lambertCompensation * _ScatteringIntensity;
+    
+    // Compute how deep the ray travels (in the [0, 1] space)
+    float normalizedTravelLength = saturate(underWaterDistance / _MaxRefractionDepth);
+
+    // Compute the refraction normal (we want to avoid using the local perturbations of the complete normal when the ray travels a lot)
+    float3 refractionNormal = lerp(waterNormal, lowFrequencyNormals, normalizedTravelLength);
+
+    // Compute the distorded water position and NDC
+    float3 distortionNormal = refractionNormal * float3(1, 0, 1); // I guess this is a refract?
+    float3 distortedWaterWS = waterPosRWS + distortionNormal * underWaterDistance;
+    float2 distortedWaterNDC = ComputeNormalizedDeviceCoordinates(distortedWaterWS, UNITY_MATRIX_VP);
+
+    // Evaluate the distorded under water color
+    float blurLod = saturate(underWaterDistance / _MaxAbsorptionDistance) * _ColorPyramidLodCount * 0.25;
+    float3 cameraColor = SampleCameraColor(distortedWaterNDC, blurLod) * GetInverseCurrentExposureMultiplier();
+
+    // Evaluate the refraction color
+    scatteringData.refractionColor = cameraColor * absorptionTint;
+
+    // Evaluate the fom scattering tint
+    float foamDistanceToSurface = max(saturate(1.f - scatteringFoam) + _FoamCloudLowFrequencyTilling, 0);
+    float3 foamScatteringCoefficients = foamDistanceToSurface * _CloudTexturedAmount * (1.f - _ScatteringColorTips);
+    scatteringData.foamScatteringTint = scatteringFoam * exp(-foamScatteringCoefficients);
 }
 #endif
