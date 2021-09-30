@@ -86,8 +86,73 @@ float3 GetVertexPositionFromVertexID(uint vertexID, uint gridResolution, float3 
     int localVertexID = vertexID % 6;
     float2 localPos = vertexPostion[triangleIndices[localVertexID]];
 
-    // Compute the position in the patch
-    float3 worldPos = float3(localPos.x + quadX - gridResolution / 2, 0.0, localPos.y + quadZ - gridResolution / 2) / gridResolution;
+    // We adjust the vertices if we detect an edge tesselation that is broken
+    float xOffset = 0;
+    float zOffset = 0;
+
+    // X = 0
+    if (quadX == 0 && (_TesselationMasks & 0x01) != 0)
+    {
+        int quadParity = (quadZ & 1);
+
+        // Killed triangle
+        if (quadParity == 0 && localVertexID == 1)
+            zOffset = -1;
+
+        // Extended triangles
+        if (quadParity == 1 && (localVertexID == 0 || localVertexID == 3))
+            zOffset = -1;
+    }
+
+    // Z =  0
+    if (quadZ == 0 && (_TesselationMasks & 0x08) != 0)
+    {
+        int quadParity = (quadX & 1);
+        // Killed triangle
+        if (quadParity == 0 && localVertexID == 5)
+            xOffset = -1;
+
+        // Extended triangles
+        if (quadParity == 1 && (localVertexID == 3 || localVertexID == 0))
+            xOffset = -1;
+    }
+
+    // X = gridResolution - 1
+    if (quadX == (gridResolution - 1) && (_TesselationMasks & 0x04) != 0)
+    {
+        int quadParity = (quadZ & 1);
+
+        // Killed triangles
+        if (quadParity == 0 && (localVertexID == 2 || localVertexID == 4))
+            zOffset = -1;
+
+        // Extended triangle
+        if (quadParity == 1 && localVertexID == 5)
+            zOffset = -1;
+    }
+
+    // Z = gridResolution - 1
+    if (quadZ == (gridResolution - 1) && (_TesselationMasks & 0x02) != 0)
+    {
+        int quadParity = (quadX & 1);
+
+        // Killed triangles
+        if (quadParity == 0 && (localVertexID == 2 || localVertexID == 4))
+            xOffset = -1;
+
+        // Extended triangle
+        if (quadParity == 1 && localVertexID == 1)
+            xOffset = -1;
+    }
+
+    // Compute the position in the vertex (no specific case here)
+    float3 worldPos = float3(localPos.x + quadX + xOffset, 0.0, localPos.y + quadZ + zOffset);
+
+    // Normalize the coordinates
+    worldPos.x = (worldPos.x - gridResolution / 2) / gridResolution;
+    worldPos.z = (worldPos.z - gridResolution / 2) / gridResolution;
+
+    // Scake the position by the size of the grid
     worldPos.x *= _GridSize.x;
     worldPos.z *= _GridSize.y;
 

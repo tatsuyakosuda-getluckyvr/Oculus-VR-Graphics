@@ -24,7 +24,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public BoolParameter enable = new BoolParameter(false);
         public WaterGridResolutionParameter gridResolution = new WaterGridResolutionParameter(WaterGridResolution.Medium512);
         public MinFloatParameter gridSize = new MinFloatParameter(1000.0f, 100.0f);
-        public MinIntParameter numLevelOfDetais = new MinIntParameter(4, 0);
+        public MinIntParameter numLevelOfDetais = new MinIntParameter(4, 1);
 
         WaterRendering()
         {

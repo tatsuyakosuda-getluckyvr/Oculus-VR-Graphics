@@ -57,7 +57,7 @@ namespace UnityEngine.Rendering.HighDefinition
         // Various internal constants
         public const int k_WaterHighBandCount = 4;
         public const int k_WaterLowBandCount = 2;
-        const int k_OceanMinGridSize = 2;
+        const int k_OceanMinGridSize = 4;
         const float k_PhillipsPatchScalar = 1000.0f;
         const float k_PhillipsAmplitudeScalar = 15.0f;
         const float k_WaterAmplitudeNormalization = 10.0f;
@@ -89,8 +89,8 @@ namespace UnityEngine.Rendering.HighDefinition
         Material m_InternalWaterMaterial;
         MaterialPropertyBlock m_OceanMaterialPropertyBlock;
         float m_DispersionTime;
-        WaterSimulationResolution m_WaterBandResolution = WaterSimulationResolution.Medium128;
         ShaderVariablesWater m_ShaderVariablesWater = new ShaderVariablesWater();
+        WaterSimulationResolution m_WaterBandResolution = WaterSimulationResolution.Medium128;
 
         void GetFFTKernels(WaterSimulationResolution resolution, out int rowKernel, out int columnKernel)
         {
@@ -248,8 +248,6 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void UpdateShaderVariablesOcean(float dispersionTime, WaterSurface currentWater, ref ShaderVariablesWater cb)
         {
-            
-
             // Evaluate the ocean time
             float oceanTime = 0.0f;
             float dynamicOceanDispersionTime = 0.0f;
@@ -434,6 +432,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public Vector3 center;
             public Vector2 extent;
             public bool highBandCount;
+            public float cameraFarPlane;
 
             public Material waterMaterial;
             public MaterialPropertyBlock mbp;
@@ -455,6 +454,7 @@ namespace UnityEngine.Rendering.HighDefinition
             parameters.center = currentWater.transform.position;
             parameters.extent = currentWater.extent;
             parameters.highBandCount = currentWater.highBandCound;
+            parameters.cameraFarPlane = camera.camera.farClipPlane;
 
             parameters.waterMaterial = currentWater.material != null ? currentWater.material : m_InternalWaterMaterial;
             parameters.mbp = m_OceanMaterialPropertyBlock;
@@ -477,6 +477,65 @@ namespace UnityEngine.Rendering.HighDefinition
             public TextureHandle colorPyramid;
             public TextureHandle colorBuffer;
             public TextureHandle depthBuffer;
+        }
+
+        // Compute the resolution of the water patch based on it's distance to the centerpatch
+        int GetPatchResolution(int x, int y, int maxResolution)
+        {
+            return Mathf.Max((maxResolution >> (Mathf.Abs(x) + Mathf.Abs(y))), k_OceanMinGridSize);
+        }
+
+        // Evaluate the mask that allows us to adapt the tesselation at patch edges
+        int EvaluateTesselationMask(int x, int y, int maxResolution)
+        {
+            int center = GetPatchResolution(x, y, maxResolution);
+            int up = GetPatchResolution(x, y + 1, maxResolution);
+            int down = GetPatchResolution(x, y - 1, maxResolution);
+            int right = GetPatchResolution(x - 1, y, maxResolution);
+            int left = GetPatchResolution(x + 1, y, maxResolution);
+            int mask = 0;
+            mask |= (center > right) ?  0x1 : 0;
+            mask |= (center > up) ?  0x2 : 0;
+            mask |= (center > left) ?  0x4 : 0;
+            mask |= (center > down) ?  0x8 : 0;
+            return mask;
+        }
+
+        void ComputeGridBounds(int x, int y, int numLODS, float centerGridSize, Vector3 centerGridPos, float farPlane, out Vector3 center, out Vector3 size)
+        {
+            // Offset position of the patch
+            center = new Vector3(x * centerGridSize, centerGridPos.y, y * centerGridSize);
+
+            // Size of the patch
+            size = new Vector2(centerGridSize, centerGridSize);
+
+            // If we have only one LOD, we don't want to scale to the far plane
+            if (numLODS == 0)
+                return;
+
+            if (x == -numLODS)
+            {
+                size.x += farPlane;
+                center.x -= farPlane / 2;
+            }
+
+            if (y == -numLODS)
+            {
+                size.y += farPlane;
+                center.z -= farPlane / 2;
+            }
+
+            if (x == numLODS)
+            {
+                size.x += farPlane;
+                center.x += farPlane / 2;
+            }
+
+            if (y == numLODS)
+            {
+                size.y += farPlane;
+                center.z += farPlane / 2;
+            }
         }
 
         void RenderWaterSurfaces(RenderGraph renderGraph, HDCamera hdCamera, TextureHandle colorBuffer, TextureHandle depthBuffer, TextureHandle colorPyramid)
@@ -532,7 +591,14 @@ namespace UnityEngine.Rendering.HighDefinition
                             // Raise the keyword if it should be raised
                             CoreUtils.SetKeyword(ctx.cmd, "HIGH_RESOLUTION_WATER", data.parameters.highBandCount);
 
+                            // Bind the color pyramid
                             data.parameters.mbp.SetTexture(HDShaderIDs._ColorPyramidTexture, data.colorPyramid);
+
+                            // Flag that tracks if we are rendering an infinite surface or just a patch for a smaller water surface
+                            data.parameters.mbp.SetFloat(HDShaderIDs._GlobalSurface, data.parameters.global ? 1.0f : 0.0f);
+
+                            // Offset of the camera
+                            data.parameters.mbp.SetVector(HDShaderIDs._CameraOffset, new Vector2(data.parameters.cameraPosition.x, data.parameters.cameraPosition.z));
 
                             if (data.parameters.global)
                             {
@@ -540,28 +606,40 @@ namespace UnityEngine.Rendering.HighDefinition
                                 OrientedBBox bbox = new OrientedBBox();
                                 bbox.right = Vector3.right;
                                 bbox.up = Vector3.forward;
-                                bbox.extentX = data.parameters.gridSize;
-                                bbox.extentY = data.parameters.gridSize;
-                                bbox.extentZ = k_WaterAmplitudeNormalization * 2.0f;
-
-                                data.parameters.mbp.SetFloat(HDShaderIDs._GlobalSurface, 1.0f);
-
+                               
                                 // Loop through the patches
                                 for (int y = -data.parameters.numLODs; y <= data.parameters.numLODs; ++y)
                                 {
                                     for (int x = -data.parameters.numLODs; x <= data.parameters.numLODs; ++x)
                                     {
+                                        // Compute the bounds of the patch
+                                        Vector3 center, size;
+                                        ComputeGridBounds(x, y, data.parameters.numLODs, data.parameters.gridSize, data.parameters.center, data.parameters.cameraFarPlane, out center, out size);
+
+                                        bbox.extentX = size.x;
+                                        bbox.extentY = size.y;
+                                        bbox.extentZ = k_WaterAmplitudeNormalization * 2.0f;
+
                                         // Compute the center of the patch
-                                        bbox.center = new Vector3(x * data.parameters.gridSize, -data.parameters.cameraPosition.y, y * data.parameters.gridSize);
+                                        bbox.center = center;
 
                                         // is this patch visible by the camera?
                                         if (GeometryUtils.Overlap(bbox, data.parameters.cameraFrustum, 6, 8))
                                         {
-                                            data.parameters.mbp.SetVector(HDShaderIDs._PatchOffset, new Vector3(x * settings.gridSize.value, data.parameters.center.y, y * settings.gridSize.value));
-                                            data.parameters.mbp.SetVector(HDShaderIDs._GridSize, new Vector2(settings.gridSize.value, settings.gridSize.value));
-                                            int pachResolution = Mathf.Max(data.parameters.gridResolution >> (Mathf.Abs(x) + Mathf.Abs(y)), k_OceanMinGridSize);
+                                            // Offset position of the patch
+                                            data.parameters.mbp.SetVector(HDShaderIDs._PatchOffset, center);
+
+                                            // Size of the patch
+                                            data.parameters.mbp.SetVector(HDShaderIDs._GridSize, size);
+
+                                            // Resolution of the patch
+                                            int pachResolution = GetPatchResolution(x, y, data.parameters.gridResolution);
                                             data.parameters.mbp.SetInt(HDShaderIDs._GridRenderingResolution, pachResolution);
-                                            data.parameters.mbp.SetVector(HDShaderIDs._CameraOffset, new Vector2(data.parameters.cameraPosition.x, data.parameters.cameraPosition.z));
+
+                                            // Evaluate the tessellation mask (used to adapt to neighboring patches)
+                                            int tesselationMasks  = EvaluateTesselationMask(x, y, data.parameters.gridResolution);
+                                            data.parameters.mbp.SetInt(HDShaderIDs._TesselationMasks, tesselationMasks);
+
                                             ctx.cmd.DrawProcedural(Matrix4x4.identity, data.parameters.waterMaterial, 0, MeshTopology.Triangles, 6 * pachResolution * pachResolution, 0, data.parameters.mbp);
                                         }
                                     }
@@ -569,15 +647,12 @@ namespace UnityEngine.Rendering.HighDefinition
                             }
                             else
                             {
-                                data.parameters.mbp.SetFloat(HDShaderIDs._GlobalSurface, 0.0f);
-
                                 Vector2 gridSize = new Vector2(0.0f, 0.0f);
                                 gridSize.x = Mathf.Min(data.parameters.extent.x, settings.gridSize.value);
                                 gridSize.y = Mathf.Min(data.parameters.extent.y, settings.gridSize.value);
                                 data.parameters.mbp.SetVector(HDShaderIDs._GridSize, gridSize);
                                 data.parameters.mbp.SetVector(HDShaderIDs._PatchOffset, data.parameters.center);
                                 data.parameters.mbp.SetInt(HDShaderIDs._GridRenderingResolution, data.parameters.gridResolution);
-                                data.parameters.mbp.SetVector(HDShaderIDs._CameraOffset, new Vector2(data.parameters.cameraPosition.x, data.parameters.cameraPosition.z));
                                 ctx.cmd.DrawProcedural(Matrix4x4.identity, data.parameters.waterMaterial, 0, MeshTopology.Triangles, 6 * data.parameters.gridResolution * data.parameters.gridResolution, 0, data.parameters.mbp);
                             }
                         });
