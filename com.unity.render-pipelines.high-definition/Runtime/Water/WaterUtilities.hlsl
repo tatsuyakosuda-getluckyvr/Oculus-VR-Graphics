@@ -183,6 +183,22 @@ void EvaluateOceanDisplacement(float3 positionAWS, out OceanDisplacementData dis
     displacementData.sssMask = EvaluateSSSMask(positionAWS, _WorldSpaceCameraPos);
 }
 
+struct PackedWaterData
+{
+    float3 positionOS;
+    float3 normalOS;
+    float4 uv0;
+    float4 uv1;
+};
+
+void PackWaterVertexData(float3 positionAWS, float3 displacement, float3 displacementNoChopiness, float lowFrequencyHeight, float foamFromHeight, float sssMask, out PackedWaterData packedWaterData)
+{
+    packedWaterData.positionOS = positionAWS + displacement;
+    packedWaterData.normalOS = float3(0, 1, 0);
+    packedWaterData.uv0 = float4(positionAWS + displacementNoChopiness, 0.0);
+    packedWaterData.uv1 = float4(lowFrequencyHeight, foamFromHeight, sssMask, 0.0);
+}
+
 struct OceanAdditionalData
 {
     float3 surfaceGradient;

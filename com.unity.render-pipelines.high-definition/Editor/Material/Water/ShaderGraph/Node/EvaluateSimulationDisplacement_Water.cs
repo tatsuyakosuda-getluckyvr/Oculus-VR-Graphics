@@ -10,16 +10,16 @@ using UnityEngine.Rendering.HighDefinition;
 namespace UnityEditor.Rendering.HighDefinition
 {
     [SRPFilter(typeof(HDRenderPipeline))]
-    [Title("Utility", "High Definition Render Pipeline", "Ocean", "EvaluateSimulationDisplacement_Ocean (Preview)")]
-    class EvaluateSimulationDisplacement_Ocean : AbstractMaterialNode, IGeneratesBodyCode
+    [Title("Utility", "High Definition Render Pipeline", "Water", "EvaluateSimulationDisplacement_Water (Preview)")]
+    class EvaluateSimulationDisplacement_Water : AbstractMaterialNode, IGeneratesBodyCode
     {
-        public EvaluateSimulationDisplacement_Ocean()
+        public EvaluateSimulationDisplacement_Water()
         {
-            name = "Evaluate Simulation Displacement (Preview)";
+            name = "Evaluate Water Simulation Displacement (Preview)";
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL => Documentation.GetPageLink("EvaluateSimulationDisplacement_Ocean");
+        public override string documentationURL => Documentation.GetPageLink("EvaluateSimulationDisplacement_Water");
 
         const int kPositionWSInputSlotId = 0;
         const string kPositionWSInputSlotName = "PositionWS";
