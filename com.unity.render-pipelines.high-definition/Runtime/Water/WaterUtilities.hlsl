@@ -337,12 +337,12 @@ float2 EvaluateFoamUV(float3 positionAWS)
 struct FoamData
 {
     float foamValue;
-    float foamTransition;
-    float3 foamSurfaceGradient;
+    float3 surfaceGradient;
 };
 
-void EvaluateFoamData(float3 foamNormal, float3 lowFrequencySurfaceGradient, 
-    float surfaceFoam, float shallowFoam, float simulationFoam, float foamFromHeight, float lowFrequencyHeight,
+void EvaluateFoamData(float3 foamNormal, float surfaceFoam, float shallowFoam,
+    float3 surfaceGradient, float3 lowFrequencySurfaceGradient, 
+     float simulationFoam, float lowFrequencyHeight, float foamFromHeight, 
     float3 inputNormalWS, out FoamData foamData)
 {   
     float  normalizedDistanceToMaxWaveHeightPlane = max(0.01, lowFrequencyHeight);
@@ -357,14 +357,17 @@ void EvaluateFoamData(float3 foamNormal, float3 lowFrequencySurfaceGradient,
     float dilatedSurfaceFoam = pow(max(0, simulationFoam * _SurfaceFoamDilation), _SurfaceFoamFalloff);
     foamData.foamValue = simulationFoam;
 
-    foamData.foamTransition = foamData.foamValue;
+    float foamTransition = simulationFoam;
 
     float3 surfaceFoamNormals = foamNormal.xyz;
     surfaceFoamNormals -= float3(0.5, 0.5, 0);
     surfaceFoamNormals = normalize(surfaceFoamNormals.xzy);
     
     // Compute the surface gradient of the foam
-    foamData.foamSurfaceGradient = SurfaceGradientFromPerturbedNormal(inputNormalWS, surfaceFoamNormals) * _SurfaceFoamNormalsWeight + lowFrequencySurfaceGradient;
+    float3 foamSurfaceGradient = SurfaceGradientFromPerturbedNormal(inputNormalWS, surfaceFoamNormals) * _SurfaceFoamNormalsWeight + lowFrequencySurfaceGradient;
+
+    // Combine it with the regular surface gradient
+    foamData.surfaceGradient = lerp(surfaceGradient, foamSurfaceGradient, simulationFoam);
 }
 
 #define OCEAN_BACKGROUND_ABSORPTION_DISTANCE 1000.f

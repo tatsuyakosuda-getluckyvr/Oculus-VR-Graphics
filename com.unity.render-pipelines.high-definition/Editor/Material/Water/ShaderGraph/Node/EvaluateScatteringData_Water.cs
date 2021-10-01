@@ -21,23 +21,23 @@ namespace UnityEditor.Rendering.HighDefinition
 
         public override string documentationURL => Documentation.GetPageLink("EvaluateScatteringData_Water");
 
-        const int kPositionWSInputSlotId = 0;
-        const string kPositionWSInputSlotName = "PositionWS";
-
-        const int kNormalWSInputSlotId = 1;
+        const int kNormalWSInputSlotId = 0;
         const string kNormalWSInputSlotName = "NormalWS";
 
-        const int kLowFrequencyNormalWSInputSlotId = 2;
+        const int kLowFrequencyNormalWSInputSlotId = 1;
         const string kLowFrequencyNormalWSInputSlotName = "LowFrequencyNormalWS";
+
+        const int kPositionWSInputSlotId = 2;
+        const string kPositionWSInputSlotName = "PositionWS";
 
         const int kScreenPositionInputSlotId = 3;
         const string kScreenPositionInputSlotName = "ScreenPosition";
 
-        const int kSSSMaskInputSlotId = 4;
-        const string kSSSMaskInputSlotName = "SSSMask";
-
-        const int kLowFrequencyHeightInputSlotId = 5;
+        const int kLowFrequencyHeightInputSlotId = 4;
         const string kLowFrequencyHeightInputSlotName = "LowFrequencyHeight";
+
+        const int kSSSMaskInputSlotId = 5;
+        const string kSSSMaskInputSlotName = "SSSMask";
 
         const int kScatteringFoamInputSlotId = 6;
         const string kScatteringFoamInputSlotName = "ScatteringFoam";
@@ -56,9 +56,9 @@ namespace UnityEditor.Rendering.HighDefinition
         public sealed override void UpdateNodeAfterDeserialization()
         {
             // Input
-            AddSlot(new Vector3MaterialSlot(kPositionWSInputSlotId, kPositionWSInputSlotName, kPositionWSInputSlotName, SlotType.Input, Vector3.zero, ShaderStageCapability.Fragment));
             AddSlot(new Vector3MaterialSlot(kNormalWSInputSlotId, kNormalWSInputSlotName, kNormalWSInputSlotName, SlotType.Input, Vector3.zero, ShaderStageCapability.Fragment));
             AddSlot(new Vector3MaterialSlot(kLowFrequencyNormalWSInputSlotId, kLowFrequencyNormalWSInputSlotName, kLowFrequencyNormalWSInputSlotName, SlotType.Input, Vector3.zero, ShaderStageCapability.Fragment));
+            AddSlot(new Vector3MaterialSlot(kPositionWSInputSlotId, kPositionWSInputSlotName, kPositionWSInputSlotName, SlotType.Input, Vector3.zero, ShaderStageCapability.Fragment));
             AddSlot(new Vector2MaterialSlot(kScreenPositionInputSlotId, kScreenPositionInputSlotName, kScreenPositionInputSlotName, SlotType.Input, Vector2.zero, ShaderStageCapability.Fragment));
             AddSlot(new Vector1MaterialSlot(kLowFrequencyHeightInputSlotId, kLowFrequencyHeightInputSlotName, kLowFrequencyHeightInputSlotName, SlotType.Input, 0, ShaderStageCapability.Fragment));
             AddSlot(new Vector1MaterialSlot(kSSSMaskInputSlotId, kSSSMaskInputSlotName, kSSSMaskInputSlotName, SlotType.Input, 0, ShaderStageCapability.Fragment));
@@ -72,12 +72,12 @@ namespace UnityEditor.Rendering.HighDefinition
             RemoveSlotsNameNotMatching(new[]
             {
                 // Input
-                kPositionWSInputSlotId,
                 kNormalWSInputSlotId,
                 kLowFrequencyNormalWSInputSlotId,
+                kPositionWSInputSlotId,
                 kScreenPositionInputSlotId,
-                kSSSMaskInputSlotId,
                 kLowFrequencyHeightInputSlotId,
+                kSSSMaskInputSlotId,
                 kScatteringFoamInputSlotId,
 
                 // Output

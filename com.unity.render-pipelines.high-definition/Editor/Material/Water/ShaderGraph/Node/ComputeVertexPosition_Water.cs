@@ -10,16 +10,16 @@ using UnityEngine.Rendering.HighDefinition;
 namespace UnityEditor.Rendering.HighDefinition
 {
     [SRPFilter(typeof(HDRenderPipeline))]
-    [Title("Utility", "High Definition Render Pipeline", "Ocean", "GetGridPositionWS_Ocean (Preview)")]
-    class GetGridPositionWS_Ocean : AbstractMaterialNode, IGeneratesBodyCode, IMayRequireVertexID
+    [Title("Utility", "High Definition Render Pipeline", "Water", "ComputeVertexPosition_Water (Preview)")]
+    class ComputeVertexPosition_Water : AbstractMaterialNode, IGeneratesBodyCode, IMayRequireVertexID
     {
-        public GetGridPositionWS_Ocean()
+        public ComputeVertexPosition_Water()
         {
-            name = "Compute Ocean PositionWS (Preview)";
+            name = "Compute Water Vertex Position (Preview)";
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL => Documentation.GetPageLink("GetGridPositionWS_Ocean");
+        public override string documentationURL => Documentation.GetPageLink("ComputeVertexPosition_Water");
 
         const int kPositionWSOutputSlotId = 0;
         const string kPositionWSOutputSlotName = "PositionWS";
