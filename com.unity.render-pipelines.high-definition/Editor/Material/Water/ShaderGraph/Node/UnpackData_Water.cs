@@ -60,8 +60,8 @@ namespace UnityEditor.Rendering.HighDefinition
         public void GenerateNodeCode(ShaderStringBuilder sb, GenerationMode generationMode)
         {
             string uv1 = GetSlotValue(kUV1InputSlotId, generationMode);
-            sb.AppendLine("$precision {0} = {1}.x; $precision {0} = {2}.y; $precision {0} = {3}.z;",
-                kUV1InputSlotId,
+            sb.AppendLine("$precision {1} = {0}.x; $precision {2} = {0}.y; $precision {3} = {0}.z;",
+                uv1,
                 GetVariableNameForSlot(kLowFrequencyHeightOutputSlotId),
                 GetVariableNameForSlot(kFoamFromHeightOutputSlotId),
                 GetVariableNameForSlot(kSSSMaskOutputSlotId)
