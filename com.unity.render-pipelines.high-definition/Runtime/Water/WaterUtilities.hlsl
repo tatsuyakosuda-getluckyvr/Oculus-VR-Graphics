@@ -8,6 +8,7 @@
 // Ocean simulation data
 Texture2DArray<float4> _DisplacementBuffer;
 Texture2DArray<float4> _NormalBuffer;
+Texture2D<float> _WaterMask;
 
 // This array converts an index to the local coordinate shift of the half resolution texture
 static const float2 vertexPostion[4] = {float2(0, 0), float2(0, 1), float2(1, 1), float2(1, 0)};
@@ -220,6 +221,13 @@ void EvaluateOceanDisplacement(float3 positionAWS, out OceanDisplacementData dis
     normalizedDisplacement = rawDisplacement.x / patchSizes2.y;
     foamFromHeight += pow(max(0, (1.f + normalizedDisplacement) * 0.5f * _FoamFromHeightWeights.y), _FoamFromHeightFalloff.y);
 
+    // Attenuate using the water mask
+    float waterMask = SAMPLE_TEXTURE2D_LOD(_WaterMask, s_linear_clamp_sampler, float2(positionAWS.x, positionAWS.z) * _WaterMaskScale + 0.5f, 0);
+    totalDisplacement *= waterMask;
+    totalDisplacementNoChopiness *= waterMask;
+    lowFrequencyHeight *= waterMask;
+    foamFromHeight *= waterMask;
+
 #if defined(HIGH_RESOLUTION_WATER)
     // Third band
     rawDisplacement = SAMPLE_TEXTURE2D_ARRAY_LOD(_DisplacementBuffer, s_linear_repeat_sampler, oceanCoord.uvBand2, 2, 0).xyz * displacementNormalization.z;
@@ -296,6 +304,13 @@ void EvaluateOceanAdditionalData(float3 positionAWS, out OceanAdditionalData oce
     lowFrequencySurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.y * 0.75;
     phaseSurfaceGradient += float3(additionalData.x, 0, additionalData.y) * _WaveAmplitude.y * 0.75;
     foam += additionalData.z ;
+
+    // Attenuate using the water mask
+    float waterMask = SAMPLE_TEXTURE2D_LOD(_WaterMask, s_linear_clamp_sampler, float2(positionAWS.x, positionAWS.z) * _WaterMaskScale + 0.5f, 0);
+    surfaceGradient *= waterMask;
+    lowFrequencySurfaceGradient *= waterMask;
+    phaseSurfaceGradient *= waterMask;
+    foam *= waterMask;
 
 #if defined(HIGH_RESOLUTION_WATER)
     // Third band

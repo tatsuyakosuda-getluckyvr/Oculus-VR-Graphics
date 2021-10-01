@@ -516,7 +516,9 @@ namespace UnityEngine.Rendering.HighDefinition
         public static readonly int _GridSize = Shader.PropertyToID("_GridSize");
         public static readonly int _GlobalSurface = Shader.PropertyToID("_GlobalSurface");
         public static readonly int _TesselationMasks = Shader.PropertyToID("_TesselationMasks");
-        
+        public static readonly int _WaterMask = Shader.PropertyToID("_WaterMask");
+        public static readonly int _WaterMaskScale = Shader.PropertyToID("_WaterMaskScale");
+
         public static readonly int _Flowmap = Shader.PropertyToID("_Flowmap");
         public static readonly int _FlowmapParam = Shader.PropertyToID("_FlowmapParam");
 

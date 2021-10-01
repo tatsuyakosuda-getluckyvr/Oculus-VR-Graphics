@@ -86,7 +86,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public Vector3 _PatchOffset;
         public uint _GridRenderingResolution;
 
-        public Vector2 _Padding2;
+        public Vector2 _WaterMaskScale;
         public uint _TesselationMasks;
         public float _GlobalSurface;
     }

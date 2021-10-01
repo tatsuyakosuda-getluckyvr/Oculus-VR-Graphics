@@ -434,6 +434,10 @@ namespace UnityEngine.Rendering.HighDefinition
             public bool highBandCount;
             public float cameraFarPlane;
 
+            // Water Mask
+            public Texture2D waterMask;
+            public Vector2 waterMaskScale;
+
             public Material waterMaterial;
             public MaterialPropertyBlock mbp;
 
@@ -456,6 +460,8 @@ namespace UnityEngine.Rendering.HighDefinition
             parameters.highBandCount = currentWater.highBandCound;
             parameters.cameraFarPlane = camera.camera.farClipPlane;
 
+            parameters.waterMask = currentWater.waterMask != null ? currentWater.waterMask : Texture2D.whiteTexture;
+            parameters.waterMaskScale = new Vector2(1.0f / currentWater.maskExtent.x, 1.0f / currentWater.maskExtent.y);
             parameters.waterMaterial = currentWater.material != null ? currentWater.material : m_InternalWaterMaterial;
             parameters.mbp = m_OceanMaterialPropertyBlock;
 
@@ -479,13 +485,13 @@ namespace UnityEngine.Rendering.HighDefinition
             public TextureHandle depthBuffer;
         }
 
-        // Compute the resolution of the water patch based on it's distance to the centerpatch
+        // Compute the resolution of the water patch based on it's distance to the center patch
         int GetPatchResolution(int x, int y, int maxResolution)
         {
             return Mathf.Max((maxResolution >> (Mathf.Abs(x) + Mathf.Abs(y))), k_OceanMinGridSize);
         }
 
-        // Evaluate the mask that allows us to adapt the tesselation at patch edges
+        // Evaluate the mask that allows us to adapt the tessellation at patch edges
         int EvaluateTesselationMask(int x, int y, int maxResolution)
         {
             int center = GetPatchResolution(x, y, maxResolution);
@@ -597,16 +603,15 @@ namespace UnityEngine.Rendering.HighDefinition
                             // Flag that tracks if we are rendering an infinite surface or just a patch for a smaller water surface
                             data.parameters.mbp.SetFloat(HDShaderIDs._GlobalSurface, data.parameters.global ? 1.0f : 0.0f);
 
+                            // Flag that tracks if we are rendering an infinite surface or just a patch for a smaller water surface
+                            data.parameters.mbp.SetTexture(HDShaderIDs._WaterMask, data.parameters.waterMask);
+                            data.parameters.mbp.SetVector(HDShaderIDs._WaterMaskScale, data.parameters.waterMaskScale);
+
                             // Offset of the camera
                             data.parameters.mbp.SetVector(HDShaderIDs._CameraOffset, new Vector2(data.parameters.cameraPosition.x, data.parameters.cameraPosition.z));
 
                             if (data.parameters.global)
                             {
-                                // Prepare the oobb for the patches
-                                OrientedBBox bbox = new OrientedBBox();
-                                bbox.right = Vector3.right;
-                                bbox.up = Vector3.forward;
-                               
                                 // Loop through the patches
                                 for (int y = -data.parameters.numLODs; y <= data.parameters.numLODs; ++y)
                                 {
@@ -616,15 +621,12 @@ namespace UnityEngine.Rendering.HighDefinition
                                         Vector3 center, size;
                                         ComputeGridBounds(x, y, data.parameters.numLODs, data.parameters.gridSize, data.parameters.center, data.parameters.cameraFarPlane, out center, out size);
 
-                                        bbox.extentX = size.x;
-                                        bbox.extentY = size.y;
-                                        bbox.extentZ = k_WaterAmplitudeNormalization * 2.0f;
-
-                                        // Compute the center of the patch
-                                        bbox.center = center;
+                                        // Build the OOBB
+                                        var obb = new OrientedBBox(Matrix4x4.TRS(center + new Vector3(data.parameters.cameraPosition.x, 0, data.parameters.cameraPosition.z), Quaternion.identity, new Vector3(size.x, k_WaterAmplitudeNormalization * 2.0f, size.y)));
+                                        obb.center -= data.parameters.cameraPosition;
 
                                         // is this patch visible by the camera?
-                                        if (GeometryUtils.Overlap(bbox, data.parameters.cameraFrustum, 6, 8))
+                                        if (GeometryUtils.Overlap(obb, data.parameters.cameraFrustum, 6, 8))
                                         {
                                             // Offset position of the patch
                                             data.parameters.mbp.SetVector(HDShaderIDs._PatchOffset, center);

@@ -16,6 +16,8 @@ namespace UnityEngine.Rendering.HighDefinition
         public Color transparentColor = new Color(0.00f, 0.45f, 0.65f);
         public Color scatteringColor = new Color(0.0f, 0.4f, 0.75f);
         public float scatteringFactor = 1.0f;
+        public Texture2D waterMask = null;
+        public Vector2 maskExtent = new Vector2(100.0f, 100.0f);
 
         internal WaterSiumulationResources simulation = null;
 

@@ -61,7 +61,7 @@ CBUFFER_START(ShaderVariablesWaterRendering)
     float2 _GridSize;
     float3 _PatchOffset;
     uint _GridRenderingResolution;
-    float2 _Padding2;
+    float2 _WaterMaskScale;
     uint _TesselationMasks;
     float _GlobalSurface;
 CBUFFER_END

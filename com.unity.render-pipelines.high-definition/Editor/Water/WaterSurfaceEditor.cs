@@ -18,6 +18,8 @@ namespace UnityEditor.Rendering.HighDefinition
         SerializedProperty m_TransparentColor;
         SerializedProperty m_ScatteringColor;
         SerializedProperty m_ScatteringFactor;
+        SerializedProperty m_WaterMask;
+        SerializedProperty m_MaskExtent;
 
         void OnEnable()
         {
@@ -34,6 +36,8 @@ namespace UnityEditor.Rendering.HighDefinition
             m_TransparentColor = o.Find(x => x.transparentColor);
             m_ScatteringColor = o.Find(x => x.scatteringColor);
             m_ScatteringFactor = o.Find(x => x.scatteringFactor);
+            m_WaterMask = o.Find(x => x.waterMask);
+            m_MaskExtent = o.Find(x => x.maskExtent);
         }
 
         void SanitizeVector4(SerializedProperty property, float minValue, float maxValue)
@@ -83,6 +87,8 @@ namespace UnityEditor.Rendering.HighDefinition
             EditorGUILayout.PropertyField(m_TransparentColor);
             EditorGUILayout.PropertyField(m_ScatteringColor);
             m_ScatteringFactor.floatValue = EditorGUILayout.Slider(m_ScatteringFactor.floatValue, 0.0f, 1.0f);
+            EditorGUILayout.PropertyField(m_WaterMask);
+            EditorGUILayout.PropertyField(m_MaskExtent);
 
             serializedObject.ApplyModifiedProperties();
         }
