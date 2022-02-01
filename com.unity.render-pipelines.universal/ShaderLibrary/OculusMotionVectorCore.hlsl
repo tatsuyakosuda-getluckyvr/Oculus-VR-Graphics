@@ -43,7 +43,9 @@ Varyings vert(Attributes input)
         float3 effectivePositionOS = (hasDeformation ? input.previousPositionOS : input.positionOS.xyz);
         float3 previousWS = TransformPreviousObjectToWorld(effectivePositionOS);
 
-        if (!IsSmoothRotation(UNITY_MATRIX_PREV_M._11_21_31, UNITY_MATRIX_PREV_M._12_22_32, UNITY_MATRIX_M._11_21_31, UNITY_MATRIX_M._12_22_32))
+        float4x4 previousOTW = GetPrevObjectToWorldMatrix();
+        float4x4 currentOTW = GetObjectToWorldMatrix();
+        if (!IsSmoothRotation(previousOTW._11_21_31, previousOTW._12_22_32, currentOTW._11_21_31, currentOTW._12_22_32))
         {
             output.prevPositionCS = output.curPositionCS;
         }
