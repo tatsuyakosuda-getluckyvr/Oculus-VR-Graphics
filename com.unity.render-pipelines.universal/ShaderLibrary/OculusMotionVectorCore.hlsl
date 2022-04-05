@@ -22,6 +22,23 @@ bool IsSmoothRotation(float3 prevAxis1, float3 prevAxis2, float3 currAxis1, floa
     return all(angleDot > angleThreshold);
 }
 
+// Best effort for particles, we'll just take into account the camera motion.
+Varyings vertParticles(Attributes input)
+{
+    Varyings output = (Varyings)0;
+    UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    output.positionCS = vertexInput.positionCS;
+
+    float3 curWS = TransformObjectToWorld(input.positionOS.xyz);
+    output.curPositionCS = TransformWorldToHClip(curWS);
+    output.prevPositionCS = TransformWorldToPrevHClip(curWS);
+
+    return output;
+}
+
 Varyings vert(Attributes input)
 {
     Varyings output = (Varyings)0;
