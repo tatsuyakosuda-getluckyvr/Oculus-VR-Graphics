@@ -161,6 +161,7 @@ namespace UnityEditor.Rendering.Universal.ShaderGraph
                             { shadowCaster },
                             { depthOnly },
                             { depthNormalsOnly },
+                            { CorePasses.MotionVectors },
                         },
                     };
                 }
